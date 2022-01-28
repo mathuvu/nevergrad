@@ -216,6 +216,8 @@ class Experiment:
         self.result["num_objectives"] = opt.num_objectives
         self.result["loss"] = pfunc.evaluation_function(*opt.pareto_front())
         self.result["elapsed_budget"] = num_calls
+        if pfunc.descriptors.get("post_evaluation_infos", None):
+            self.result.update(pfunc.descriptors["post_evaluation_infos"])
         if num_calls > self.optimsettings.budget:
             raise RuntimeError(
                 f"Too much elapsed budget {num_calls} for {self.optimsettings.name} on {self.function}"

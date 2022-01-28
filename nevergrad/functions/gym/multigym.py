@@ -610,6 +610,7 @@ class GymMulti(ExperimentFunction):
 
     def evaluation_function(self, *recommendations) -> float:
         """Averages multiple evaluations if necessary."""
+        self.add_descriptors(post_evaluation_infos={"num_connexions":-1})
         if self.sparse_limit is None:  # Life is simple here, we directly have the weights.
             x = recommendations[0].value
         else:  # Here 0 in the enablers means that the weight is forced to 0.
@@ -619,6 +620,7 @@ class GymMulti(ExperimentFunction):
             assert all(x_ in [0, 1] for x_ in enablers), f"non-binary enablers: {enablers}."
             enablers = enablers.reshape(weights.shape)
             x = weights * enablers
+            self.descriptors["post_evaluation_infos"]["num_connexions"] = enablers.sum().item()
         if not self.randomized:
             assert not self.uses_compiler_gym
             return self.gym_multi_function(x, limited_fidelity=False)
@@ -740,9 +742,10 @@ class GymMulti(ExperimentFunction):
         loss = self.gym_multi_function(
             x, limited_fidelity=limited_fidelity, compiler_gym_pb_index=compiler_gym_pb_index
         )
+
         sparse_penalty = 0
         if self.sparse_limit is not None:  # Then we penalize the weights above the threshold "sparse_limit".
-            sparse_penalty = (1 + np.abs(loss)) * max(0, np.sum(enablers) - self.sparse_limit)
+            sparse_penalty = (1 + np.abs(loss)) * 0.05 * np.sqrt(max(0, np.sum(enablers) - self.sparse_limit*weights.size))
         return loss + sparse_penalty
 
     def gym_multi_function(

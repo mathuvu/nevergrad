@@ -79,24 +79,26 @@ def ng_full_gym(
         env_names = nevergrad_gym.GymMulti.ng_gym
     if gp:
         try:
-            import pybullet  # pylint: disable=unused-import
-            import pybullet_envs  # pylint: disable=unused-import
-            import pybulletgym  # pylint: disable=unused-import
-            import pyvirtualdisplay
+            #import pybullet  # pylint: disable=unused-import
+            #import pybullet_envs  # pylint: disable=unused-import
+            #import pybulletgym  # pylint: disable=unused-import
+            #import pyvirtualdisplay
 
             # I deserve eternal damnation for this hack:
-            pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
+            #pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
             env_names = [
                 "CartPole-v1",
                 "Acrobot-v1",
                 "MountainCarContinuous-v0",
-                "Pendulum-v0",
-                "InvertedPendulumSwingupBulletEnv-v0",
-                "BipedalWalker-v3",
-                "BipedalWalkerHardcore-v3",
-                "HopperBulletEnv-v0",
-                "InvertedDoublePendulumBulletEnv-v0",
-                "LunarLanderContinuous-v2",
+                "Swimmer-v2",
+                "InvertedPendulum-v2",
+                #"Pendulum-v0",
+                #"InvertedPendulumSwingupBulletEnv-v0",
+                #"BipedalWalker-v3",
+                #"BipedalWalkerHardcore-v3",
+                #"HopperBulletEnv-v0",
+                #"InvertedDoublePendulumBulletEnv-v0",
+                #"LunarLanderContinuous-v2",
             ]
         except:
             print("Pybullet not installed. If you need it, please do something like:")
@@ -112,13 +114,13 @@ def ng_full_gym(
     seedg = create_seed_generator(seed)
     optims = [
         "DiagonalCMA",
-        "GeneticDE",
+        #"GeneticDE",
         "NoisyRL1",
-        "NoisyRL2",
-        "NoisyRL3",
+        #"NoisyRL2",
+        #"NoisyRL3",
         "MixDeterministicRL",
         "SpecialRL",
-        "PSO",
+        #"PSO",
     ]
     if multi:
         controls = ["multi_neural"]
@@ -126,10 +128,10 @@ def ng_full_gym(
         controls = (
             [
                 "neural",
-                "structured_neural",
+                #"structured_neural",
                 # "memory_neural",
-                "stackingmemory_neural",
-                "deep_neural",
+                #"stackingmemory_neural",
+                #"deep_neural",
                 "semideep_neural",
                 # "noisy_neural",
                 # "noisy_scrambled_neural",
@@ -150,19 +152,19 @@ def ng_full_gym(
         assert not multi
     if conformant:
         controls = ["stochastic_conformant"]
-    budgets = [204800, 12800, 25600, 51200, 50, 200, 800, 3200, 6400, 100, 25, 400, 1600, 102400]
+    budgets = [50, 200, 800, 3200, 6400, 100, 25, 400, 1600, 12800]
     budgets = gym_budget_modifier(budgets)
     for control in controls:
         neural_factors: tp.Any = (
             [None]
             if (conformant or control == "linear")
-            else ([1] if "memory" in control else ([3] if big else [1, 2, 3]))
+            else ([1] if "memory" in control else ([3] if big else [1, 2]))
         )
         for neural_factor in neural_factors:
             for name in env_names:
                 sparse_limits: tp.List[tp.Optional[int]] = [None]
                 if sparse:
-                    sparse_limits += [10, 100, 1000]
+                    sparse_limits += [0.0, 0.25, 0.5, 0.75, 1.0]
                 for sparse_limit in sparse_limits:
                     try:
                         func = nevergrad_gym.GymMulti(
