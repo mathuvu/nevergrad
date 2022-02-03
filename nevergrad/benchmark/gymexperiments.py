@@ -92,7 +92,7 @@ def ng_full_gym(
                 "MountainCarContinuous-v0",
                 "Swimmer-v2",
                 "InvertedPendulum-v2",
-                #"Pendulum-v1",
+                "Pendulum-v1",
                 #"InvertedPendulumSwingupBulletEnv-v0",
                 #"BipedalWalker-v3",
                 #"BipedalWalkerHardcore-v3",
@@ -114,7 +114,7 @@ def ng_full_gym(
     seedg = create_seed_generator(seed)
     optims = [
         "DiagonalCMA",
-        #"GeneticDE",
+        "GeneticDE",
         "NoisyRL1",
         #"NoisyRL2",
         #"NoisyRL3",
@@ -131,7 +131,7 @@ def ng_full_gym(
                 #"structured_neural",
                 # "memory_neural",
                 #"stackingmemory_neural",
-                #"deep_neural",
+                "deep_neural",
                 "semideep_neural",
                 # "noisy_neural",
                 # "noisy_scrambled_neural",
@@ -164,23 +164,25 @@ def ng_full_gym(
             for name in env_names:
                 sparse_limits: tp.List[tp.Optional[int]] = [None]
                 if sparse:
-                    sparse_limits += [0.0, 0.25, 0.5, 0.75, 1.0]
+                    sparse_limits += [0.0, 0.25, 1.0]
                 for sparse_limit in sparse_limits:
-                    try:
-                        func = nevergrad_gym.GymMulti(
-                            name,
-                            control=control,
-                            neural_factor=neural_factor,
-                            randomized=randomized,
-                            sparse_limit=sparse_limit,
-                        )
-                    except MemoryError:
-                        continue
-                    for budget in budgets:
-                        for algo in optims:
-                            xp = Experiment(func, algo, budget, num_workers=1, seed=next(seedg))
-                            if not xp.is_incoherent:
-                                yield xp
+                    for scale in [-6, -4, -2, 0]:
+                        try:
+                            func = nevergrad_gym.GymMulti(
+                                name,
+                                control=control,
+                                neural_factor=neural_factor,
+                                randomized=randomized,
+                                sparse_limit=sparse_limit,
+                                optimization_scale=scale
+                            )
+                        except MemoryError:
+                            continue
+                        for budget in budgets:
+                            for algo in optims:
+                                xp = Experiment(func, algo, budget, num_workers=1, seed=next(seedg))
+                                if not xp.is_incoherent:
+                                    yield xp
 
 
 @registry.register
