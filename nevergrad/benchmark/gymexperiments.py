@@ -117,7 +117,7 @@ def ng_full_gym(
         "GeneticDE",
         "NoisyRL1",
         #"NoisyRL2",
-        #"NoisyRL3",
+        "NoisyRL3",
         "MixDeterministicRL",
         "SpecialRL",
         #"PSO",
@@ -152,7 +152,7 @@ def ng_full_gym(
         assert not multi
     if conformant:
         controls = ["stochastic_conformant"]
-    budgets = [50, 200, 800, 3200, 6400, 100, 25, 400, 1600, 12800]
+    budgets = [50, 200, 800, 3200, 6400, 100, 25, 400, 1600]
     budgets = gym_budget_modifier(budgets)
     for control in controls:
         neural_factors: tp.Any = (
