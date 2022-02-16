@@ -87,16 +87,19 @@ def ng_full_gym(
             # I deserve eternal damnation for this hack:
             #pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
             env_names = [
-                "CartPole-v1",
-                "Acrobot-v1",
-                "MountainCarContinuous-v0",
-                "Swimmer-v2",
-                "InvertedPendulum-v2",
-                "Pendulum-v1",
+                #"CartPole-v1",
+                #"Acrobot-v1",
+                #"MountainCarContinuous-v0",
+                #"Swimmer-v2",
+                #"InvertedPendulum-v2",
+                #"Pendulum-v1",
                 #"InvertedPendulumSwingupBulletEnv-v0",
-                #"BipedalWalker-v3",
+                "BipedalWalker-v3",
                 #"BipedalWalkerHardcore-v3",
-                #"HopperBulletEnv-v0",
+                "Hopper-v3",
+                "Ant-v3",
+                "HalfCheetah-v3",
+                "Walker2d-v3",
                 #"InvertedDoublePendulumBulletEnv-v0",
                 #"LunarLanderContinuous-v2",
             ]
@@ -114,12 +117,12 @@ def ng_full_gym(
     seedg = create_seed_generator(seed)
     optims = [
         "DiagonalCMA",
-        "GeneticDE",
-        "NoisyRL1",
+        #"GeneticDE",
+        #"NoisyRL1",
         #"NoisyRL2",
         "NoisyRL3",
         "MixDeterministicRL",
-        "SpecialRL",
+        #"SpecialRL",
         #"PSO",
     ]
     if multi:
@@ -152,16 +155,18 @@ def ng_full_gym(
         assert not multi
     if conformant:
         controls = ["stochastic_conformant"]
-    budgets = [50, 200, 800, 3200, 6400, 100, 25, 400, 1600]
+    budgets = [50, 200, 800, 3200, 100, 25, 400, 1600]
     budgets = gym_budget_modifier(budgets)
     for control in controls:
         neural_factors: tp.Any = (
             [None]
             if (conformant or control == "linear")
-            else ([1] if "memory" in control else ([3] if big else [1, 2]))
+            else ([1] if "memory" in control else ([3] if big else [1, 2, 10]))
         )
         for neural_factor in neural_factors:
             for name in env_names:
+                if name=="Ant-v3" and neural_factor>3:
+                    continue
                 sparse_limits: tp.List[tp.Optional[int]] = [None]
                 if sparse:
                     sparse_limits += [0.0, 0.25, 1.0]
@@ -219,7 +224,7 @@ def gp(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
 
 
 @registry.register
-def sparse_gp(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
+def sparse_gp_loco(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
     """GP benchmark.
 
     Counterpart of ng_full_gym with a specific, reduced list of problems for matching
