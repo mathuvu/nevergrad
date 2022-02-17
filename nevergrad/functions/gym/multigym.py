@@ -42,6 +42,8 @@ GUARANTEED_GYM_ENV_NAMES = [
 
 # We do not use "conformant" which is not consistent with the rest.
 CONTROLLERS = [
+    "resid_semideep_neural",
+    "resid_deep_neural",
     "linear",  # Simple linear controller.
     "neural",  # Simple neural controller.
     "deep_neural",  # Deeper neural controller.
@@ -537,6 +539,8 @@ class GymMulti(ExperimentFunction):
             self.first_layer_shape = (self.input_dim + 1, self.num_neurons)
             self.second_layer_shape = (self.num_neurons, self.output_dim)
         shape_dict = {
+            "resid_semideep_neural": neural_size,
+            "resid_deep_neural": neural_size,
             "conformant": (self.num_time_steps,) + output_shape,
             "stochastic_conformant": (self.num_time_steps,) + output_shape,
             "linear": (input_dim + 1, output_dim),
@@ -572,6 +576,7 @@ class GymMulti(ExperimentFunction):
             repetitions = int(np.prod(shape))
             assert isinstance(repetitions, int), f"{repetitions}"
             parametrization2 = ng.p.Choice([0, 1], repetitions=repetitions)  # type: ignore
+            parametrization2.value = np.ones(repetitions)
             parametrization = ng.p.Instrumentation(  # type: ignore
                 weights=parametrization1,
                 enablers=parametrization2,
@@ -726,10 +731,21 @@ class GymMulti(ExperimentFunction):
             internal_layer_size = self.num_neurons ** 2
             s = (self.num_neurons, self.num_neurons)
             for _ in range(self.num_internal_layers):
-                output = np.tanh(output)
-                output = np.matmul(
+                if "resid" in self.control:
+                    pre_activation = output.copy() 
+                    output = np.tanh(output)
+                else:
+                    output = np.tanh(output)
+                
+                if "resid" in self.control:
+                    output = (np.matmul(
+                    output, x[current_index : current_index + internal_layer_size].reshape(s)
+                ) / np.sqrt(self.num_neurons)) + pre_activation
+                else:
+                    output = np.matmul(
                     output, x[current_index : current_index + internal_layer_size].reshape(s)
                 ) / np.sqrt(self.num_neurons)
+
                 current_index += internal_layer_size
             assert current_index == len(x)
         output = np.matmul(np.tanh(output + first_matrix[0]), second_matrix)
@@ -749,8 +765,11 @@ class GymMulti(ExperimentFunction):
         )
 
         sparse_penalty = 0
-        if self.sparse_limit is not None:  # Then we penalize the weights above the threshold "sparse_limit".
-            sparse_penalty = (1 + np.abs(loss)) * 0.2 * np.sqrt(max(0, np.sum(enablers) - self.sparse_limit*weights.size))
+        if self.sparse_limit is not None and self.num_calls <= 5800 and self.num_calls > 500:  # Then we penalize the weights above the threshold "sparse_limit".
+            s = self.sparse_limit + (1 - self.sparse_limit)*((1 - (self.num_calls - 400)/(5000))**3) if self.num_calls < 5400 else 0.0
+            sparse_lambda = 0.2 if self.num_calls < 5400 else 0.2*(1/(self.num_calls-5399))**(1.4)
+            sparse_penalty = (1 + np.abs(loss)) * sparse_lambda * np.sqrt(max(0, np.sum(enablers) - s*weights.size))
+        
         return loss + sparse_penalty
 
     def gym_multi_function(
