@@ -87,12 +87,12 @@ def ng_full_gym(
             # I deserve eternal damnation for this hack:
             #pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
             env_names = [
-                "InvertedDoublePendulum-v2",
+                "InvertedDoublePendulum-v2",# InvertedDoublePendulumMuJoCoEnv-v0 in PyBullet
                 "CartPole-v1",
                 "Acrobot-v1",
                 "MountainCarContinuous-v0",
-                #"Swimmer-v2",
-                "InvertedPendulum-v2",
+                #"Swimmer-v3",
+                "InvertedPendulum-v2",# InvertedPendulumMuJoCoEnv-v0 in PyBullet
                 #"Pendulum-v1",
                 #"InvertedPendulumSwingupBulletEnv-v0",
                 #"BipedalWalker-v3",
@@ -225,7 +225,7 @@ def gp(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
 
 
 @registry.register
-def sparse_gp_gradual(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
+def sparse_gp(seed: tp.Optional[int] = None) -> tp.Iterator[Experiment]:
     """GP benchmark.
 
     Counterpart of ng_full_gym with a specific, reduced list of problems for matching
